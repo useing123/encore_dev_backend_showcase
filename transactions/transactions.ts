@@ -21,12 +21,23 @@ interface AddTransactionParams {
 }
 
 // Add a new transaction
-export const add = api({ method: "POST", path: "/transactions", auth: false }, async (params: AddTransactionParams): Promise<void> => {
-    const amountInCents = Math.round(params.amount * 100);
-    await db.query`
+export const add = api({ method: "POST", path: "/transactions", auth: false }, async (params: AddTransactionParams): Promise<Transaction> => {
+    const amountInCents = Math.trunc(params.amount * 100);
+    const result = await db.queryRow`
         INSERT INTO transactions (description, amount, category)
-        VALUES (${params.description}, ${amountInCents}, ${params.category});
+        VALUES (${params.description}, ${amountInCents}::INTEGER, ${params.category})
+        RETURNING id, description, amount::bigint, category, "timestamp";
     `;
+    if (!result) {
+        throw new Error("Failed to create transaction");
+    }
+    return {
+        id: result.id,
+        description: result.description,
+        amount: result.amount / 100,
+        category: result.category,
+        timestamp: result.timestamp,
+    };
 });
 
 // List all transactions
