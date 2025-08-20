@@ -21,32 +21,28 @@ interface AddTransactionParams {
 }
 
 // Add a new transaction
-export const add = api({ method: "POST", path: "/transactions", auth: false }, async (params: AddTransactionParams): Promise<Transaction> => {
-    const result = await db.queryRow`
+export const add = api({ method: "POST", path: "/transactions", auth: false }, async (params: AddTransactionParams): Promise<void> => {
+    const amountInCents = Math.round(params.amount * 100);
+    await db.query`
         INSERT INTO transactions (description, amount, category)
-        VALUES (${params.description}, ${params.amount}, ${params.category})
-        RETURNING *;
+        VALUES (${params.description}, ${amountInCents}, ${params.category});
     `;
-    if (!result) {
-        throw new Error("Failed to create transaction");
-    }
-    return {
-        id: result.id,
-        description: result.description,
-        amount: result.amount,
-        category: result.category,
-        timestamp: result.timestamp,
-    };
 });
 
 // List all transactions
 export const list = api({ method: "GET", path: "/transactions", auth: false }, async (): Promise<{ transactions: Transaction[] }> => {
     const transactions: Transaction[] = [];
-    for await (const row of db.query<Transaction>`
+    for await (const row of db.query<any>`
         SELECT * FROM transactions
         ORDER BY timestamp DESC
     `) {
-        transactions.push(row);
+        transactions.push({
+            id: row.id,
+            description: row.description,
+            amount: row.amount / 100,
+            category: row.category,
+            timestamp: row.timestamp,
+        });
     }
     return { transactions };
 });
@@ -54,10 +50,10 @@ export const list = api({ method: "GET", path: "/transactions", auth: false }, a
 // Gets the total balance of all transactions
 export const balance = api({ method: "GET", path: "/transactions/balance", auth: false }, async (): Promise<{ balance: number }> => {
     const result = await db.queryRow`
-        SELECT SUM(amount) AS total FROM transactions
+        SELECT SUM(amount)::bigint AS total FROM transactions
     `;
-    if (!result) {
+    if (!result || !result.total) {
         return { balance: 0 };
     }
-    return { balance: result.total || 0 };
+    return { balance: result.total / 100 || 0 };
 });
