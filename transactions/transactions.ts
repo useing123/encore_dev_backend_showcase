@@ -44,7 +44,7 @@ export const add = api({ method: "POST", path: "/transactions", auth: false }, a
 export const list = api({ method: "GET", path: "/transactions", auth: false }, async (): Promise<{ transactions: Transaction[] }> => {
     const transactions: Transaction[] = [];
     for await (const row of db.query<any>`
-        SELECT * FROM transactions
+        SELECT id, description, amount::bigint, category, "timestamp" FROM transactions
         ORDER BY timestamp DESC
     `) {
         transactions.push({
