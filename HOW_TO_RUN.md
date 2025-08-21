@@ -74,14 +74,6 @@ While `encore run` is running, you can access Encore's local developer dashboard
 
 This section addresses the points mentioned in the project requirements.
 
-### How Claude Code was used to build the app
-
-This information is not available in the codebase. It would typically involve the process of using an AI assistant to generate, refactor, or debug the code for the various services.
-
-### Custom agent prompts in @graphyn/code
-
-This information is not available in the codebase. These would be the specific prompts used with the AI assistant to generate the desired code and logic.
-
 ### The app running with your features
 
 The application can be run using the instructions above. The key features are:
